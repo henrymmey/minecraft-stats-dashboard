@@ -1,7 +1,7 @@
-import type { ReactNode } from "react";
 import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { ApiKeysPage } from "./pages/ApiKeysPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { SetupPage } from "./pages/SetupPage";
 
 const placeholders: Record<string, string> = {
   "/players": "Players",
@@ -40,6 +40,7 @@ function Layout() {
       <main className="content">
         <Routes>
           <Route path="/" element={<OverviewPage />} />
+          <Route path="/setup" element={<SetupPage />} />
           <Route path="/api-keys" element={<ApiKeysPage />} />
           {Object.entries(placeholders).map(([path, title]) => (
             <Route key={path} path={path} element={<Placeholder title={title} />} />
