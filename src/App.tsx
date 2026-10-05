@@ -1,4 +1,20 @@
+import type { ReactNode } from "react";
 import { Link, Navigate, Route, Routes } from "react-router-dom";
+import { ApiKeysPage } from "./pages/ApiKeysPage";
+import { OverviewPage } from "./pages/OverviewPage";
+
+const placeholders: Record<string, string> = {
+  "/players": "Players",
+  "/statistics": "Statistics",
+  "/sessions": "Sessions",
+  "/events": "Events",
+  "/leaderboards": "Leaderboards",
+  "/servers": "Servers",
+  "/seasons": "Seasons",
+  "/users": "Admins",
+  "/audit-log": "Audit Log",
+  "/settings": "Settings",
+};
 
 function Layout() {
   return (
@@ -20,20 +36,14 @@ function Layout() {
           <Link to="/settings">Settings</Link>
         </nav>
       </aside>
+
       <main className="content">
         <Routes>
-          <Route path="/" element={<Page title="Overview" />} />
-          <Route path="/players" element={<Page title="Players" />} />
-          <Route path="/statistics" element={<Page title="Statistics" />} />
-          <Route path="/sessions" element={<Page title="Sessions" />} />
-          <Route path="/events" element={<Page title="Events" />} />
-          <Route path="/leaderboards" element={<Page title="Leaderboards" />} />
-          <Route path="/api-keys" element={<Page title="API Keys" />} />
-          <Route path="/servers" element={<Page title="Servers" />} />
-          <Route path="/seasons" element={<Page title="Seasons" />} />
-          <Route path="/users" element={<Page title="Admins" />} />
-          <Route path="/audit-log" element={<Page title="Audit Log" />} />
-          <Route path="/settings" element={<Page title="Settings" />} />
+          <Route path="/" element={<OverviewPage />} />
+          <Route path="/api-keys" element={<ApiKeysPage />} />
+          {Object.entries(placeholders).map(([path, title]) => (
+            <Route key={path} path={path} element={<Placeholder title={title} />} />
+          ))}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -41,17 +51,15 @@ function Layout() {
   );
 }
 
-function Page({ title }: { title: string }) {
+function Placeholder({ title }: { title: string }) {
   return (
     <>
       <header className="page-header">
-        <div>
-          <p className="eyebrow">Administration</p>
-          <h1>{title}</h1>
-        </div>
+        <p className="eyebrow">Administration</p>
+        <h1>{title}</h1>
       </header>
       <section className="page-card">
-        <p>This section is wired into the shared dashboard shell. API-backed content comes next.</p>
+        <p>This section is planned and will use the shared typed API layer.</p>
       </section>
     </>
   );
