@@ -1,16 +1,16 @@
 import { Link, Navigate, Route, Routes } from "react-router-dom";
 import { ApiKeysPage } from "./pages/ApiKeysPage";
 import { OverviewPage } from "./pages/OverviewPage";
+import { PlayersPage } from "./pages/PlayersPage";
+import { ServersPage } from "./pages/ServersPage";
+import { SeasonsPage } from "./pages/SeasonsPage";
 import { SetupPage } from "./pages/SetupPage";
 
 const placeholders: Record<string, string> = {
-  "/players": "Players",
   "/statistics": "Statistics",
   "/sessions": "Sessions",
   "/events": "Events",
   "/leaderboards": "Leaderboards",
-  "/servers": "Servers",
-  "/seasons": "Seasons",
   "/users": "Admins",
   "/audit-log": "Audit Log",
   "/settings": "Settings",
@@ -42,6 +42,9 @@ function Layout() {
           <Route path="/" element={<OverviewPage />} />
           <Route path="/setup" element={<SetupPage />} />
           <Route path="/api-keys" element={<ApiKeysPage />} />
+          <Route path="/players" element={<PlayersPage />} />
+          <Route path="/servers" element={<ServersPage />} />
+          <Route path="/seasons" element={<SeasonsPage />} />
           {Object.entries(placeholders).map(([path, title]) => (
             <Route key={path} path={path} element={<Placeholder title={title} />} />
           ))}
