@@ -28,7 +28,9 @@ h1 { margin: 0; font-size: 2rem; }
 button, input, select { border: 1px solid #3f3f46; border-radius: 8px; padding: 9px 12px; background: #18181b; color: #f4f4f5; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; opacity: .6; }
-.key-form { display: grid; gap: 14px; max-width: 640px; }
+.key-form { display: grid; gap: 14px; max-width: 720px; }
+.form-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+
 .key-form label { display: grid; gap: 6px; font-weight: 600; }
 .key-form input, .key-form select { width: 100%; }
 .scope-preview, .error-text { color: #a1a1aa; }
