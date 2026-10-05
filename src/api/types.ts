@@ -12,7 +12,7 @@ export type ApiKey = {
   created_at: string;
   revoked_at: string | null;
   scopes: string[];
-  player_restrictions: string[];
+  uuid_restrictions: string[];
   server_restrictions: string[];
   season_restrictions: string[];
 };
@@ -22,7 +22,7 @@ export type CreateApiKeyRequest = {
   type: ApiKeyType;
   description?: string | null;
   scopes: string[];
-  player_restrictions?: string[];
+  uuid_restrictions?: string[];
   server_restrictions?: string[];
   season_restrictions?: string[];
   expires_at?: string | null;
