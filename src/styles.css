@@ -32,6 +32,13 @@ button:disabled { cursor: not-allowed; opacity: .6; }
 .key-form label { display: grid; gap: 6px; font-weight: 600; }
 .key-form input, .key-form select { width: 100%; }
 .scope-preview, .error-text { color: #a1a1aa; }
+fieldset { border: 1px solid #27272a; border-radius: 10px; padding: 14px; }
+legend { padding: 0 6px; color: #a1a1aa; }
+.checkbox-grid { display: grid; gap: 8px; max-height: 260px; overflow: auto; }
+.checkbox-row { display: flex !important; grid-template-columns: none !important; gap: 8px !important; align-items: flex-start; font-weight: 400 !important; }
+.checkbox-row input { width: auto !important; margin-top: 3px; }
+.checkbox-row small { display: block; color: #71717a; }
+.button-link { display: inline-block; margin-top: 8px; padding: 9px 12px; border-radius: 8px; background: #27272a; }
 .error-text { color: #fca5a5; }
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
