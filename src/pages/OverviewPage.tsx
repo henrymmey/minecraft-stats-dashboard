@@ -1,0 +1,24 @@
+import { useQuery } from "@tanstack/react-query";
+import { authApi } from "../api/auth";
+
+export function OverviewPage() {
+  const query = useQuery({ queryKey: ["admin-me"], queryFn: authApi.me });
+
+  if (query.isPending) return <section className="page-card">Loading account…</section>;
+  if (query.isError) return <section className="page-card">Unable to load the current account.</section>;
+
+  return (
+    <section className="stats-grid">
+      <div className="stat-card">
+        <span>Signed in as</span>
+        <strong>{query.data.display_name}</strong>
+        <small>{query.data.email ?? "No email claim"}</small>
+      </div>
+      <div className="stat-card">
+        <span>Workspace role</span>
+        <strong>{query.data.role}</strong>
+        <small>{query.data.workspace_id}</small>
+      </div>
+    </section>
+  );
+}
