@@ -28,7 +28,8 @@ export function ApiKeysPage() {
   const [name, setName] = useState("");
   const [type, setType] = useState<ApiKeyType>("client");
   const [selectedScopes, setSelectedScopes] = useState(defaultScopes.client);
-  const [players, setPlayers] = useState<string[]>([]);
+  const [uuids, setUuids] = useState<string[]>([]);
+  const [uuidText, setUuidText] = useState("");
   const [servers, setServers] = useState<string[]>([]);
   const [seasons, setSeasons] = useState<string[]>([]);
   const [secret, setSecret] = useState<string | null>(null);
@@ -44,7 +45,7 @@ export function ApiKeysPage() {
       name: name.trim(),
       type,
       scopes: selectedScopes,
-      player_restrictions: players,
+      uuid_restrictions: mergeUuids(),
       server_restrictions: servers,
       season_restrictions: seasons,
     }),
@@ -63,7 +64,7 @@ export function ApiKeysPage() {
         name: name.trim(),
         type: editing.type,
         scopes: selectedScopes,
-        player_restrictions: players,
+        uuid_restrictions: mergeUuids(),
         server_restrictions: servers,
         season_restrictions: seasons,
       });
@@ -94,7 +95,8 @@ export function ApiKeysPage() {
     setName(editing.name);
     setType(editing.type);
     setSelectedScopes(editing.scopes);
-    setPlayers(editing.player_restrictions);
+    setUuids(editing.uuid_restrictions);
+    setUuidText(editing.uuid_restrictions.join("\n"));
     setServers(editing.server_restrictions);
     setSeasons(editing.season_restrictions);
   }, [editing]);
@@ -112,7 +114,8 @@ export function ApiKeysPage() {
     setName("");
     setType("client");
     setSelectedScopes(defaultScopes.client);
-    setPlayers([]);
+    setUuids([]);
+    setUuidText("");
     setServers([]);
     setSeasons([]);
     setError(null);
@@ -125,6 +128,15 @@ export function ApiKeysPage() {
 
   function toggle(values: string[], value: string, setter: (next: string[]) => void) {
     setter(values.includes(value) ? values.filter((item) => item !== value) : [...values, value]);
+  }
+
+  function mergeUuids(): string[] {
+    const manual = uuidText
+      .split(/\\r?\\n/)
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    return [...new Set([...uuids, ...manual])];
   }
 
   function submit(event: FormEvent) {
@@ -198,16 +210,31 @@ export function ApiKeysPage() {
           </fieldset>
 
           <fieldset>
-            <legend>Player restrictions</legend>
-            <p className="scope-preview">Empty means every player in this workspace.</p>
-            <div className="checkbox-grid">
-              {playerQuery.data?.map((player) => (
-                <label className="checkbox-row" key={player.id}>
-                  <input type="checkbox" checked={players.includes(player.id)} onChange={() => toggle(players, player.id, setPlayers)} />
-                  <span>{player.current_username} <small>{player.minecraft_uuid}</small></span>
-                </label>
-              ))}
-            </div>
+            <legend>Minecraft UUID restrictions</legend>
+            <p className="scope-preview">Empty means every player. UUIDs can be entered before the player has ever connected.</p>
+            <label>
+              UUIDs (one per line)
+              <textarea
+                rows={5}
+                value={uuidText}
+                onChange={(event) => setUuidText(event.target.value)}
+                placeholder={"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee\nffffffff-1111-2222-3333-444444444444"}
+              />
+            </label>
+            {playerQuery.data && playerQuery.data.length > 0 && (
+              <div className="checkbox-grid">
+                {playerQuery.data.map((player) => (
+                  <label className="checkbox-row" key={player.id}>
+                    <input
+                      type="checkbox"
+                      checked={uuids.includes(player.minecraft_uuid)}
+                      onChange={() => toggle(uuids, player.minecraft_uuid, setUuids)}
+                    />
+                    <span>{player.current_username} <small>{player.minecraft_uuid}</small></span>
+                  </label>
+                ))}
+              </div>
+            )}
           </fieldset>
 
           <fieldset>
@@ -255,7 +282,7 @@ export function ApiKeysPage() {
                     <td>{key.name}</td>
                     <td>{key.type}</td>
                     <td>{key.revoked_at ? "Revoked" : key.enabled ? "Active" : "Disabled"}</td>
-                    <td>{key.player_restrictions.length} player · {key.server_restrictions.length} server · {key.season_restrictions.length} season</td>
+                    <td>{key.uuid_restrictions.length} UUID · {key.server_restrictions.length} server · {key.season_restrictions.length} season</td>
                     <td>{key.last_used_at ? new Date(key.last_used_at).toLocaleString() : "Never"}</td>
                     <td>
                       {!key.revoked_at && (
