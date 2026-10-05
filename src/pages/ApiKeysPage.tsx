@@ -1,10 +1,10 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiKeysApi } from "../api/apiKeys";
 import { ApiError } from "../api/client";
 import { adminResourcesApi } from "../api/adminResources";
-import type { ApiKeyType } from "../api/types";
+import type { ApiKey, ApiKeyType } from "../api/types";
 
 const scopes = [
   "ingest:write",
@@ -24,6 +24,7 @@ const defaultScopes: Record<ApiKeyType, string[]> = {
 
 export function ApiKeysPage() {
   const queryClient = useQueryClient();
+  const [editing, setEditing] = useState<ApiKey | null>(null);
   const [name, setName] = useState("");
   const [type, setType] = useState<ApiKeyType>("client");
   const [selectedScopes, setSelectedScopes] = useState(defaultScopes.client);
@@ -49,22 +50,73 @@ export function ApiKeysPage() {
     }),
     onSuccess: (result) => {
       setSecret(result.secret);
-      setName("");
+      resetForm();
       void queryClient.invalidateQueries({ queryKey: ["api-keys"] });
     },
-    onError: (cause) => {
-      setError(
-        cause instanceof ApiError
-          ? cause.message + (cause.requestId ? " (request " + cause.requestId + ")" : "")
-          : "Unable to create the API key.",
-      );
+    onError: showError,
+  });
+
+  const update = useMutation({
+    mutationFn: () => {
+      if (!editing) throw new Error("No API key selected.");
+      return apiKeysApi.update(editing.id, {
+        name: name.trim(),
+        type: editing.type,
+        scopes: selectedScopes,
+        player_restrictions: players,
+        server_restrictions: servers,
+        season_restrictions: seasons,
+      });
     },
+    onSuccess: () => {
+      resetForm();
+      void queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+    },
+    onError: showError,
+  });
+
+  const rotate = useMutation({
+    mutationFn: apiKeysApi.rotate,
+    onSuccess: (result) => {
+      setSecret(result.secret);
+      void queryClient.invalidateQueries({ queryKey: ["api-keys"] });
+    },
+    onError: showError,
   });
 
   const revoke = useMutation({
     mutationFn: apiKeysApi.revoke,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["api-keys"] }),
   });
+
+  useEffect(() => {
+    if (!editing) return;
+    setName(editing.name);
+    setType(editing.type);
+    setSelectedScopes(editing.scopes);
+    setPlayers(editing.player_restrictions);
+    setServers(editing.server_restrictions);
+    setSeasons(editing.season_restrictions);
+  }, [editing]);
+
+  function showError(cause: unknown) {
+    setError(
+      cause instanceof ApiError
+        ? cause.message + (cause.requestId ? " (request " + cause.requestId + ")" : "")
+        : "The API key operation failed.",
+    );
+  }
+
+  function resetForm() {
+    setEditing(null);
+    setName("");
+    setType("client");
+    setSelectedScopes(defaultScopes.client);
+    setPlayers([]);
+    setServers([]);
+    setSeasons([]);
+    setError(null);
+  }
 
   function setKeyType(next: ApiKeyType) {
     setType(next);
@@ -89,7 +141,8 @@ export function ApiKeysPage() {
       return;
     }
 
-    create.mutate();
+    if (editing) update.mutate();
+    else create.mutate();
   }
 
   return (
@@ -101,7 +154,7 @@ export function ApiKeysPage() {
 
       {secret && (
         <section className="secret-card">
-          <strong>New API key — save it now</strong>
+          <strong>API key secret — save it now</strong>
           <p>This secret will not be shown again.</p>
           <code>{secret}</code>
           <div className="actions">
@@ -113,6 +166,11 @@ export function ApiKeysPage() {
 
       <section className="page-card">
         <form className="key-form" onSubmit={submit}>
+          <div className="form-heading">
+            <strong>{editing ? "Edit API key" : "Create API key"}</strong>
+            {editing && <button type="button" onClick={resetForm}>Cancel</button>}
+          </div>
+
           <label>
             Name
             <input value={name} onChange={(event) => setName(event.target.value)} placeholder="HMT Minecraft Clients" />
@@ -120,7 +178,7 @@ export function ApiKeysPage() {
 
           <label>
             Type
-            <select value={type} onChange={(event) => setKeyType(event.target.value as ApiKeyType)}>
+            <select value={type} disabled={Boolean(editing)} onChange={(event) => setKeyType(event.target.value as ApiKeyType)}>
               <option value="client">Client</option>
               <option value="website">Website</option>
               <option value="integration">Integration</option>
@@ -132,11 +190,7 @@ export function ApiKeysPage() {
             <div className="checkbox-grid">
               {scopes.map((scope) => (
                 <label className="checkbox-row" key={scope}>
-                  <input
-                    type="checkbox"
-                    checked={selectedScopes.includes(scope)}
-                    onChange={() => toggle(selectedScopes, scope, setSelectedScopes)}
-                  />
+                  <input type="checkbox" checked={selectedScopes.includes(scope)} onChange={() => toggle(selectedScopes, scope, setSelectedScopes)} />
                   <span>{scope}</span>
                 </label>
               ))}
@@ -145,15 +199,11 @@ export function ApiKeysPage() {
 
           <fieldset>
             <legend>Player restrictions</legend>
-            <p className="scope-preview">Leave empty to allow all players in the workspace.</p>
+            <p className="scope-preview">Empty means every player in this workspace.</p>
             <div className="checkbox-grid">
               {playerQuery.data?.map((player) => (
                 <label className="checkbox-row" key={player.id}>
-                  <input
-                    type="checkbox"
-                    checked={players.includes(player.id)}
-                    onChange={() => toggle(players, player.id, setPlayers)}
-                  />
+                  <input type="checkbox" checked={players.includes(player.id)} onChange={() => toggle(players, player.id, setPlayers)} />
                   <span>{player.current_username} <small>{player.minecraft_uuid}</small></span>
                 </label>
               ))}
@@ -162,15 +212,11 @@ export function ApiKeysPage() {
 
           <fieldset>
             <legend>Server restrictions</legend>
-            <p className="scope-preview">Leave empty to allow all registered servers.</p>
+            <p className="scope-preview">Empty means every registered server.</p>
             <div className="checkbox-grid">
               {serverQuery.data?.map((server) => (
                 <label className="checkbox-row" key={server.id}>
-                  <input
-                    type="checkbox"
-                    checked={servers.includes(server.id)}
-                    onChange={() => toggle(servers, server.id, setServers)}
-                  />
+                  <input type="checkbox" checked={servers.includes(server.id)} onChange={() => toggle(servers, server.id, setServers)} />
                   <span>{server.display_name} <small>{server.hostname}:{server.port}</small></span>
                 </label>
               ))}
@@ -179,23 +225,19 @@ export function ApiKeysPage() {
 
           <fieldset>
             <legend>Season restrictions</legend>
-            <p className="scope-preview">Leave empty to allow all seasons.</p>
+            <p className="scope-preview">Empty means every season.</p>
             <div className="checkbox-grid">
               {seasonQuery.data?.map((season) => (
                 <label className="checkbox-row" key={season.id}>
-                  <input
-                    type="checkbox"
-                    checked={seasons.includes(season.id)}
-                    onChange={() => toggle(seasons, season.id, setSeasons)}
-                  />
+                  <input type="checkbox" checked={seasons.includes(season.id)} onChange={() => toggle(seasons, season.id, setSeasons)} />
                   <span>{season.name} <small>{season.slug}</small></span>
                 </label>
               ))}
             </div>
           </fieldset>
 
-          <button disabled={create.isPending} type="submit">
-            {create.isPending ? "Creating…" : "Create API key"}
+          <button disabled={create.isPending || update.isPending} type="submit">
+            {editing ? (update.isPending ? "Saving…" : "Save changes") : (create.isPending ? "Creating…" : "Create API key")}
           </button>
         </form>
 
@@ -206,25 +248,38 @@ export function ApiKeysPage() {
         {keys.isPending ? <p>Loading keys…</p> : (
           <div className="table-wrap">
             <table>
-              <thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Prefix</th><th>Restrictions</th><th>Last used</th><th /></tr></thead>
+              <thead><tr><th>Name</th><th>Type</th><th>Status</th><th>Restrictions</th><th>Last used</th><th /></tr></thead>
               <tbody>
                 {keys.data?.map((key) => (
                   <tr key={key.id}>
                     <td>{key.name}</td>
                     <td>{key.type}</td>
                     <td>{key.revoked_at ? "Revoked" : key.enabled ? "Active" : "Disabled"}</td>
-                    <td><code>{key.prefix}</code></td>
-                    <td>
-                      {key.player_restrictions.length} player · {key.server_restrictions.length} server · {key.season_restrictions.length} season
-                    </td>
+                    <td>{key.player_restrictions.length} player · {key.server_restrictions.length} server · {key.season_restrictions.length} season</td>
                     <td>{key.last_used_at ? new Date(key.last_used_at).toLocaleString() : "Never"}</td>
                     <td>
                       {!key.revoked_at && (
-                        <button type="button" onClick={() => {
-                          if (window.confirm("Revoke " + key.name + "?")) revoke.mutate(key.id);
-                        }}>
-                          Revoke
-                        </button>
+                        <div className="actions">
+                          <button type="button" onClick={() => setEditing(key)}>Edit</button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm("Rotate " + key.name + "? The current key will be revoked.")) {
+                                rotate.mutate(key.id);
+                              }
+                            }}
+                          >
+                            Rotate
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm("Revoke " + key.name + "?")) revoke.mutate(key.id);
+                            }}
+                          >
+                            Revoke
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
