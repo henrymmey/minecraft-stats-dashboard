@@ -9,6 +9,14 @@ export class ApiError extends Error {
   }
 }
 
+function csrfToken(): string | undefined {
+  const cookie = document.cookie
+    .split("; ")
+    .find((entry) => entry.startsWith("XSRF-TOKEN="));
+
+  return cookie ? decodeURIComponent(cookie.slice("XSRF-TOKEN=".length)) : undefined;
+}
+
 async function readJson(response: Response): Promise<unknown> {
   const text = await response.text();
   if (!text) return null;
@@ -26,6 +34,7 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
     headers: {
       Accept: "application/json",
       ...(init.body ? { "Content-Type": "application/json" } : {}),
+      ...(csrfToken() ? { "X-XSRF-TOKEN": csrfToken() as string } : {}),
       ...init.headers,
     },
   });
