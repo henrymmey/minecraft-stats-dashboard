@@ -13,6 +13,12 @@ export const apiKeysApi = {
       body: JSON.stringify(payload),
     }),
 
+  update: (id: string, payload: CreateApiKeyRequest) =>
+    apiFetch<{ data: ApiKey }>("/api/v1/admin/api-keys/" + id, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+
   revoke: (id: string) =>
     apiFetch<null>("/api/v1/admin/api-keys/" + id + "/revoke", { method: "POST" }),
 
