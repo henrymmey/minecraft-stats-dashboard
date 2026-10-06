@@ -132,7 +132,7 @@ export function ApiKeysPage() {
 
   function mergeUuids(): string[] {
     const manual = uuidText
-      .split(/\\r?\\n/)
+      .split(/\r?\n/)
       .map((value) => value.trim())
       .filter(Boolean);
 
