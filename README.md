@@ -1,6 +1,6 @@
-# Minecraft Stats Dashboard
+# HM Stats Dashboard
 
-Administrative web interface for Minecraft Stats Server.
+Administrative web interface for HM Stats Server.
 
 ## Stack
 
