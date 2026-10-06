@@ -20,7 +20,7 @@ function Layout() {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="brand">Minecraft Stats</div>
+        <div className="brand">HM Stats</div>
         <nav>
           <Link to="/">Overview</Link>
           <Link to="/players">Players</Link>
