@@ -40,7 +40,12 @@ export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise
   });
 
   if (response.status === 401) {
-    window.location.assign("/auth/login");
+    const authError = new URLSearchParams(window.location.search).get("auth") === "error";
+
+    if (!authError) {
+      window.location.assign("/auth/login");
+    }
+
     throw new ApiError("Authentication required.", 401);
   }
 
