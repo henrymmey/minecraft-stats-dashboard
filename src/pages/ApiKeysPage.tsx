@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiKeysApi } from "../api/apiKeys";
 import { ApiError } from "../api/client";
@@ -90,16 +90,17 @@ export function ApiKeysPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["api-keys"] }),
   });
 
-  useEffect(() => {
-    if (!editing) return;
-    setName(editing.name);
-    setType(editing.type);
-    setSelectedScopes(editing.scopes);
-    setUuids(editing.uuid_restrictions);
-    setUuidText(editing.uuid_restrictions.join("\n"));
-    setServers(editing.server_restrictions);
-    setSeasons(editing.season_restrictions);
-  }, [editing]);
+  function beginEdit(key: ApiKey) {
+    setEditing(key);
+    setName(key.name);
+    setType(key.type);
+    setSelectedScopes(key.scopes);
+    setUuids(key.uuid_restrictions);
+    setUuidText(key.uuid_restrictions.join("\n"));
+    setServers(key.server_restrictions);
+    setSeasons(key.season_restrictions);
+    setError(null);
+  }
 
   function showError(cause: unknown) {
     setError(
@@ -287,7 +288,7 @@ export function ApiKeysPage() {
                     <td>
                       {!key.revoked_at && (
                         <div className="actions">
-                          <button type="button" onClick={() => setEditing(key)}>Edit</button>
+                          <button type="button" onClick={() => beginEdit(key)}>Edit</button>
                           <button
                             type="button"
                             onClick={() => {
