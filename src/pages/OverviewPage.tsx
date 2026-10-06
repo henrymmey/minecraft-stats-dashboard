@@ -8,21 +8,6 @@ export function OverviewPage() {
   if (query.isPending) return <section className="page-card">Loading account…</section>;
   if (query.isError) return <section className="page-card">Unable to load the current account.</section>;
 
-  if (query.data.needs_bootstrap) {
-    return (
-      <>
-        <header className="page-header">
-          <p className="eyebrow">First-run setup</p>
-          <h1>Initialize your workspace</h1>
-        </header>
-        <section className="page-card">
-          <p>You are authenticated, but no workspace exists yet.</p>
-          <Link className="button-link" to="/setup">Open setup</Link>
-        </section>
-      </>
-    );
-  }
-
   return (
     <>
       <header className="page-header">
